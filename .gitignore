@@ -1,0 +1,6 @@
+/dist/
+/build/
+*.decrypted.tgz
+__pycache__/
+*.py[cod]
+

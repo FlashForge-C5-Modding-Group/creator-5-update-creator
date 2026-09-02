@@ -1,0 +1,6 @@
+[submodule "ffklipper13"]
+	path = sources/ffklipper13
+	url = https://github.com/FlashForge-C5-Modding-Group/ffklipper13.git
+[submodule "firmware-archive"]
+	path = sources/firmware-archive
+	url = https://github.com/FlashForge-C5-Modding-Group/creator-5-pro-firmware-archive.git

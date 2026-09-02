@@ -1,0 +1,78 @@
+name: Build Creator 5 Pro update
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      filename:
+        description: Encrypted output filename
+        required: true
+        default: Creator5Pro-1.9.7-1.2.9-20260810.tgz
+      components:
+        description: Comma list or all (software must be included)
+        required: true
+        default: software,library
+      mcu_mode:
+        description: Preserve vendor MCU HEX or use rebuilt ffklipper13 HEX
+        type: choice
+        options: [preserve, replacement]
+        default: preserve
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    env:
+      OUTPUT_FILENAME: ${{ inputs.filename || 'Creator5Pro-1.9.7-1.2.9-20260810.tgz' }}
+      COMPONENTS: ${{ inputs.components || 'software,library' }}
+      MCU_MODE: ${{ inputs.mcu_mode || 'preserve' }}
+    steps:
+      - name: Check out project and source submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Install cross-build and packaging tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            binutils-arm-none-eabi gcc-arm-none-eabi \
+            gcc-mipsel-linux-gnu libnewlib-arm-none-eabi \
+            openssl squashfs-tools xz-utils
+
+      - name: Test update builder
+        run: python3 -m unittest discover -s tests -v
+
+      - name: Build replacement MCU images
+        if: env.MCU_MODE == 'replacement'
+        run: |
+          chmod +x sources/ffklipper13/scripts/build-flashforge-mcus.sh
+          JOBS=4 sources/ffklipper13/scripts/build-flashforge-mcus.sh all
+
+      - name: Build and self-verify encrypted update
+        run: |
+          export SOURCE_DATE_EPOCH="$(git show -s --format=%ct HEAD)"
+          python3 scripts/build_update.py \
+            --klipper sources/ffklipper13 \
+            --updates sources/firmware-archive \
+            --template template \
+            --output-dir dist \
+            --filename "$OUTPUT_FILENAME" \
+            --components "$COMPONENTS" \
+            --mcu-mode "$MCU_MODE" \
+            --c-helper-mode rebuild
+
+      - name: Upload encrypted update and provenance
+        uses: actions/upload-artifact@v4
+        with:
+          name: creator5pro-update-${{ github.run_number }}
+          path: |
+            dist/*.tgz
+            dist/*.sha256
+            dist/*.manifest.json
+          if-no-files-found: error

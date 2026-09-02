@@ -1,0 +1,7 @@
+* text=auto
+*.img binary
+template/play binary
+*.tgz binary
+*.xz binary
+*.zip binary
+
