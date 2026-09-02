@@ -42,8 +42,15 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
             binutils-arm-none-eabi gcc-arm-none-eabi \
-            gcc-mipsel-linux-gnu libnewlib-arm-none-eabi \
+            gcc-mipsel-linux-gnu libc6-dev-mipsel-cross \
+            libnewlib-arm-none-eabi \
             openssl squashfs-tools xz-utils
+
+      - name: Verify MIPSel cross compiler sysroot
+        run: |
+          printf '#include <stdint.h>\n#include <linux/can.h>\nint main(void) { return 0; }\n' \
+            | mipsel-linux-gnu-gcc -x c -c -o /tmp/mipsel-sysroot-test.o -
+          file /tmp/mipsel-sysroot-test.o
 
       - name: Test update builder
         run: python3 -m unittest discover -s tests -v
