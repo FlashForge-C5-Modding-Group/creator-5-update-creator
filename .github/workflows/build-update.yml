@@ -55,9 +55,18 @@ jobs:
           chmod +x sources/ffklipper13/scripts/build-flashforge-mcus.sh
           JOBS=4 sources/ffklipper13/scripts/build-flashforge-mcus.sh all
 
+      - name: Use repository kernel without rebuilding rootfs
+        if: env.COMPONENTS == 'all' || contains(env.COMPONENTS, 'kernel')
+        run: |
+          OTA_DIR=sources/firmware-archive/kernel/ota_kernel_emmc/ota_v1
+          mv "$OTA_DIR/rootfs_extracted" \
+            "$RUNNER_TEMP/firmware-archive-rootfs-extracted"
+          sed -i '/^img_type=rootfs$/,+4d' "$OTA_DIR/ota_update.in"
+          find "$OTA_DIR" -maxdepth 1 -type f \
+            -name 'ota_md5_rootfs.squashfs.*' -delete
+
       - name: Build and self-verify encrypted update
         run: |
-          export SOURCE_DATE_EPOCH="$(git show -s --format=%ct HEAD)"
           python3 scripts/build_update.py \
             --klipper sources/ffklipper13 \
             --updates sources/firmware-archive \
