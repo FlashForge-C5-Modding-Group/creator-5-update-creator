@@ -13,12 +13,12 @@ on:
       components:
         description: Comma list or all (software must be included)
         required: true
-        default: software,library
+        default: all
       mcu_mode:
         description: Preserve vendor MCU HEX or use rebuilt ffklipper13 HEX
         type: choice
         options: [preserve, replacement]
-        default: preserve
+        default: replacement
 
 permissions:
   contents: read
@@ -28,8 +28,8 @@ jobs:
     runs-on: ubuntu-24.04
     env:
       OUTPUT_FILENAME: ${{ inputs.filename || 'Creator5Pro-1.9.7-1.2.9-20260810.tgz' }}
-      COMPONENTS: ${{ inputs.components || 'software,library' }}
-      MCU_MODE: ${{ inputs.mcu_mode || 'preserve' }}
+      COMPONENTS: ${{ inputs.components || 'all' }}
+      MCU_MODE: ${{ inputs.mcu_mode || 'replacement' }}
     steps:
       - name: Check out project and source submodules
         uses: actions/checkout@v4
